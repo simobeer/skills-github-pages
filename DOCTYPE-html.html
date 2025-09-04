@@ -1,0 +1,116 @@
+<!DOCTYPE html>  
+<html lang="de">  
+<head>  
+<meta charset="UTF-8">  
+<title>Backronyme Markenliste – 350 Einträge</title>  
+<meta name="viewport" content="width=device-width, initial-scale=1">  
+<style>  
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#f6f7fb;color:#111;}  
+header{position:sticky;top:0;background:#fff;padding:12px 16px;box-shadow:0 2px 10px rgba(0,0,0,.06);z-index:10;}  
+h1{margin:0 0 6px;font-size:20px;}  
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}  
+#search{flex:1;padding:8px 10px;font-size:16px;border:1px solid #d7d9e0;border-radius:10px;}  
+#resetBtn{padding:6px 10px;border-radius:10px;border:1px solid #d7d9e0;background:#fff;cursor:pointer;}  
+main{padding:12px 16px;max-width:1000px;margin:0 auto;}  
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;}  
+section.category{background:#fff;border-radius:10px;border:1px solid #ebecef;overflow:hidden;}  
+.cat-head{display:flex;justify-content:space-between;padding:8px 10px;background:#fafbff;border-bottom:1px solid #ebecef;}  
+.list{max-height:400px;overflow:auto;}  
+.brand{padding:8px 10px;border-bottom:1px dashed #eee;cursor:pointer;transition:background .12s;}  
+.brand:hover{background:#f3f6ff;}  
+.brand.hidden{display:none;}  
+.out{position:sticky;bottom:0;background:#fff;border:1px solid #ebecef;border-radius:10px;padding:10px;margin-top:12px;font-size:12px;}  
+</style>  
+</head>  
+<body>  
+<header>  
+<h1>📝 Backronyme Markenliste – 350 Einträge</h1>  
+<div class="controls">  
+<input id="search" placeholder="🔎 Marke suchen …">  
+<button id="resetBtn">Zurücksetzen</button>  
+<span id="totalInfo">Geladen: 0</span>  
+</div>  
+</header>  
+<main>  
+<div id="grid" class="grid"></div>  
+<div id="output" class="out">Klicke auf eine Marke!</div>  
+</main>  
+<script>  
+// -------- Daten --------  
+const CATEGORIES=["Supermärkte","Tech & Hardware","Browser & Internet","KI & Assistenten","Gaming","Getränke"];  
+const WORDS={A:["Alles","Auch","Absolute"],B:["Bringt","Bleibt","Bockt"],C:["Chaos","Cool","Clunky"],D:["Dauernd","Defekt","Direkt"],E:["Ewig","Extra","Echt"],F:["Frust","Fix","Flott"],G:["Ganz","Gern","Gelegentlich"],H:["Heute","Häufig","Hart"],I:["Immer","Instant","Irgendwie"],J:["Jedesmal","Joah","Jubelnd"],K:["Komisch","Knapp","Krass"],L:["Langsam","Leider","Lustig"],M:["Meist","Mega","Manchmal"],N:["Nervt","Nie","Neulich"],O:["Ohne","Oft","Optimal"],P:["Plötzlich","Praktisch","Passiert"],Q:["Quick","Quiet","Quasi"],R:["Ruckelt","Rasant","Rätselhaft"],S:["Stets","Super","Selten"],T:["Täglich","Total","Teilweise"],U:["Und","Ultra","Uff"],V:["Viel","Völlig","Vermutlich"],W:["Wieder","Wirklich","Why?"],X:["X-tra","Xylophonisch","X-beliebig"],Y:["Yo","Yep","Yikes"],Z:["Ziemlich","Zackig","Zart"]};  
+const NAME_SEEDS={ "Supermärkte":["ALDI","LIDL","EDEKA","REWE","PENNY","KAUFLAND"], "Tech & Hardware":["WINDOWS","MAC","PC","SSD","RAM","CPU"], "Browser & Internet":["GOOGLE","CHROME","EDGE","FIREFOX","SAFARI","YOUTUBE"], "KI & Assistenten":["GPT","SIRI","ALEXA","CORTANA"], "Gaming":["TETRIS","MINECRAFT","MARIO","ZELDA"], "Getränke":["COCA COLA","PEPSI","FANTA","SPRITE","WASSER","KAFFEE"]};  
+const TARGET_TOTAL=350;  
+const perCat=Math.floor(TARGET_TOTAL/CATEGORIES.length);  
+const leftovers=TARGET_TOTAL-perCat*CATEGORIES.length;  
+  
+// -------- Backronym Generator --------  
+function makeBackronym(name){  
+  const clean=name.toUpperCase().replace(/[^A-Z]/g,"");  
+  let parts=[];  
+  for(const ch of clean){  
+    const list=WORDS[ch]||WORDS[String.fromCharCode(65+Math.floor(Math.random()*26))];  
+    parts.push(list[Math.floor(Math.random()*list.length)]);  
+  }  
+  return parts.join(" ") + ".";  
+}  
+  
+// -------- Daten auffüllen --------  
+const data={};  
+CATEGORIES.forEach(cat=>{  
+  data[cat]=[];  
+  let i=0;  
+  while(data[cat].length<perCat){  
+    const seed=NAME_SEEDS[cat][i%NAME_SEEDS[cat].length];  
+    const num=Math.floor(data[cat].length/NAME_SEEDS[cat].length)+1;  
+    const name=(seed+" "+num);  
+    data[cat].push({name:name,bedeutung:makeBackronym(name)});  
+    i++;  
+  }  
+});  
+// Reste  
+for(let i=0;i<leftovers;i++){  
+  const cat=CATEGORIES[i%CATEGORIES.length];  
+  const seed=NAME_SEEDS[cat][0];  
+  const name=seed+"+"+(data[cat].length+1);  
+  data[cat].push({name:name,bedeutung:makeBackronym(name)});  
+}  
+  
+// -------- Rendering --------  
+const grid=document.getElementById("grid");  
+const output=document.getElementById("output");  
+const totalInfo=document.getElementById("totalInfo");  
+function render(){  
+  grid.innerHTML="";  
+  let total=0;  
+  CATEGORIES.forEach(cat=>{  
+    const sec=document.createElement("section");sec.className="category";  
+    const head=document.createElement("div");head.className="cat-head";  
+    const title=document.createElement("div");title.textContent=cat;head.appendChild(title);  
+    const ul=document.createElement("div");ul.className="list";  
+    data[cat].forEach(item=>{  
+      total++;  
+      const d=document.createElement("div");d.className="brand";d.textContent=item.name;  
+      d.addEventListener("click",()=>{output.innerHTML=`<b>${item.name}</b> = ${item.bedeutung}`});  
+      ul.appendChild(d);  
+    });  
+    sec.appendChild(head);sec.appendChild(ul);grid.appendChild(sec);  
+  });  
+  totalInfo.textContent=`Geladen: ${total}`;  
+}  
+render();  
+  
+// -------- Suche --------  
+document.getElementById("search").addEventListener("input",e=>{  
+  const q=e.target.value.toLowerCase();  
+  document.querySelectorAll(".brand").forEach(el=>{  
+    el.classList.toggle("hidden",!el.textContent.toLowerCase().includes(q));  
+  });  
+});  
+document.getElementById("resetBtn").addEventListener("click",()=>{  
+  document.getElementById("search").value="";  
+  document.querySelectorAll(".brand").forEach(el=>el.classList.remove("hidden"));  
+});  
+</script>  
+</body>  
+</html>  
